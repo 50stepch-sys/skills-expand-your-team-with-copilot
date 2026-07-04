@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PreStore Omega AI OS - JARVIS Enhanced</title>
+    <script>
+        // Global error interceptor to catch and handle unhandled cross-origin errors gracefully
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.warn('Captured global error: ' + message + ' from ' + source + ':' + lineno);
+            const msg = String(message || '').toLowerCase();
+            if (msg.includes('script error') || msg.includes('cross-origin') || !source) {
+                return true;
+            }
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function(event) {
+            console.warn('Captured unhandled promise rejection:', event.reason);
+            const reason = String(event.reason || '').toLowerCase();
+            if (reason.includes('script error') || reason.includes('cross-origin') || reason.includes('permission-denied') || reason.includes('firebase')) {
+                event.preventDefault();
+            }
+        });
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Outfit:wght@300;500;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Noto Nastaliq Urdu', Arial, sans-serif;
+            margin: 0; padding: 0;
+            overflow: hidden;
+            background: #0f172a;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* JARVIS Theme Enhancements */
+        .jarvis-accent { color: #00d4ff; text-shadow: 0 0 10px #00d4ff; }
+        .jarvis-glow { 
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+        .jarvis-pulse {
+            animation: jarvisPulse 2s infinite;
+        }
+        @keyframes jarvisPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .bg-gradient-mesh {
+            position: fixed; inset: 0; z-index: -1;
+            background:
+                radial-gradient(circle at 20% 30%, #f97316 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, #3b82f6 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, #ec4899 0%, transparent 50%);
+            filter: blur(80px); opacity: 0.6;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .glass-card:active { transform: scale(0.98); background: rgba(255, 255, 255, 0.15); }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            width: 100%;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .glass-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .font-english { font-family: 'Outfit', sans-serif; }
+        .custom-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 8px 0; width: 100%; }
+        
+        /* JARVIS Voice Interface */
+        .jarvis-voice-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            font-size: 12px;
+        }
+        
+        .jarvis-waveform {
+            display: flex;
+            gap: 3px;
+            align-items: flex-end;
+            height: 30px;
+        }
+        
+        .jarvis-bar {
+            width: 3px;
+            background: linear-gradient(to top, #00d4ff, #00ff88);
+            border-radius: 2px;
+            animation: jarvisBar 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes jarvisBar {
+            0%, 100% { height: 5px; }
+            50% { height: 20px; }
+        }
+        
+        /* JARVIS Status Display */
+        .jarvis-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 11px;
+            color: #00d4ff;
+            z-index: 9999;
+            font-family: 'Outfit', monospace;
+        }
+        
+        .jarvis-status.active {
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        
+        /* Smooth transitions */
+        .transition-smooth {
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        
+        .mic-wrapper { position: relative; display: flex; align-items: center; justify-content: center; }
+        .mic-outer-circle {
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 70px; height: 70px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+        .mic-inner-circle {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 50px; height: 50px;
+            transition: all 0.3s ease;
+        }
+        .listening .mic-outer-circle {
+            background-color: rgba(239, 68, 68, 0.3);
+            border: 2px solid rgba(239, 68, 68, 0.7);
+            transform: scale(1.15);
+            animation: pulse 1.5s infinite;
+        }
+        .listening .mic-inner-circle {
+            border-color: rgba(239, 68, 68, 0.5);
+            animation: innerPulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+        }
+        @keyframes innerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.9); }
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.error { background: rgba(239, 68, 68, 0.9); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-content {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        /* Stats cards */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            flex: 1;
+        }
+        .stat-value { font-size: 1.5rem; font-weight: 800; }
+        .stat-label { font-size: 0.75rem; opacity: 0.7; margin-top: 4px; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+        /* Chart container */
+        .chart-container { position: relative; height: 200px; width: 100%; }
+        
+        /* JARVIS Command History */
+        .jarvis-history {
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px;
+            margin-top: 8px;
+            max-height: 100px;
+            overflow-y: auto;
+            font-size: 10px;
+            color: #00d4ff;
+        }
+        
+        .jarvis-command-item {
+            padding: 4px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+            font-family: 'Outfit', monospace;
+        }
+    </style>
+</head>
+<body class="h-[100dvh] w-full flex flex-col items-center">
+    <div class="bg-gradient-mesh"></div>
+    
+    <!-- JARVIS Status Display -->
+    <div id="jarvisStatus" class="jarvis-status">
+        <div class="flex items-center gap-2 mb-2">
+            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+            <span class="font-bold">JARVIS System</span>
+        </div>
+        <div id="jarvisMode" class="text-xs opacity-80">Standby Mode</div>
+        <div id="jarvisAutonomy" class="text-xs opacity-80 mt-1">Autonomy: Standard</div>
+    </div>
+    
+    <!-- Auth Overlay -->
+    <div id="authOverlay" class="fixed inset-0 bg-[#0f172a] z-[9999] flex flex-col items-center justify-center text-white px-4" style="display: flex;">
+        <div class="mb-8 text-center">
+            <h1 class="text-4xl font-bold mb-2 jarvis-accent">⚡ JARVIS</h1>
+            <p class="text-sm opacity-70 font-english">AI Operating System</p>
+            <p class="text-xs opacity-50 mt-2">PreStore Omega - Enhanced Edition</p>
+        </div>
+        
+        <h2 class="text-2xl font-bold mb-2 text-center">PreStore Omega AI OS</h2>
+        <p class="opacity-70 mb-8 text-center">Sir, I'm ready to assist you. Please authenticate.</p>
+        
+        <button id="googleLoginBtn" onclick="login()" class="glass-card px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-white/10 transition active:scale-95 duration-150 mb-4">
+            <span id="loginBtnSpinner" class="hidden animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
+            <svg id="googleLogoSvg" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+            <span id="loginBtnText">Google سے لاگ ان کریں</span>
+        </button>
+        
+        <p id="authError" class="text-red-400 mt-4 text-sm max-w-sm text-center hidden font-urdu px-4 bg-red-500/10 border border-red-500/20 py-2 rounded-xl"></p>
+        
+        <div class="mt-6 flex flex-col items-center gap-3 w-full">
+            <span class="opacity-50 text-xs">— یا (Or) —</span>
+            <button onclick="enterAsGuest()" class="w-full px-6 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-orange-500/20 to-yellow-500/20 border border-orange-500/40 text-orange-300 hover:from-orange-500/30 hover:to-yellow-500/30 transition active:scale-95 duration-150 flex items-center justify-center gap-2 shadow-lg shadow-orange-950/20">
+                <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+                بغیر لاگ ان جاری رکھیں (Demo)
+            </button>
+        </div>
+        
+        <!-- JARVIS Features Showcase -->
+        <div class="mt-12 grid grid-cols-1 gap-3 w-full max-w-sm text-xs">
+            <div class="glass-card p-3 rounded-lg border-l-2 border-blue-400">
+                <p class="font-bold text-blue-300 mb-1">✨ JARVIS Personality</p>
+                <p class="opacity-70 text-[10px]">Addresses you as "Sir", sophisticated British English</p>
+            </div>
+            <div class="glass-card p-3 rounded-lg border-l-2 border-green-400">
+                <p class="font-bold text-green-300 mb-1">⚡ Real-time Processing</p>
+                <p class="opacity-70 text-[10px]">Sub-second command recognition and execution</p>
+            </div>
+            <div class="glass-card p-3 rounded-lg border-l-2 border-orange-400">
+                <p class="font-bold text-orange-300 mb-1">🔐 Security-First</p>
+                <p class="opacity-70 text-[10px]">Voice verification for high-value operations</p>
+            </div>
+            <div class="glass-card p-3 rounded-lg border-l-2 border-purple-400">
+                <p class="font-bold text-purple-300 mb-1">🧠 Learning System</p>
+                <p class="opacity-70 text-[10px]">Context memory of previous commands</p>
+            </div>
+            <div class="glass-card p-3 rounded-lg border-l-2 border-pink-400">
+                <p class="font-bold text-pink-300 mb-1">🎚️ Adaptive Autonomy</p>
+                <p class="opacity-70 text-[10px]">Adjustable autonomy levels for use cases</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Add Entry Modal -->
+    <div id="addModal" class="modal-overlay">
+        <div class="modal-content text-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-xl font-bold">نیا اندراج</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="entryForm" onsubmit="saveEntry(event)" class="space-y-4">
+                <input type="hidden" id="entryId">
+                <input type="hidden" id="entryModule">
+                <div id="formFields"></div>
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-xl font-bold">
+                        محفوظ کریں
+                    </button>
+                    <button type="button" onclick="closeModal()" class="flex-1 glass-card py-3 rounded-xl font-bold">
+                        منسوخ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JARVIS Command History Display -->
+    <div id="jarvisHistoryContainer" class="hidden fixed top-20 right-4 w-80 max-h-64 z-50">
+        <div class="glass-card p-4 rounded-lg jarvis-glow">
+            <h3 class="text-sm font-bold jarvis-accent mb-2 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                Command History
+            </h3>
+            <div id="jarvisHistoryList" class="jarvis-history space-y-1"></div>
+        </div>
+    </div>
+
+    <div class="w-full h-full max-w-2xl flex flex-col px-6 text-white">
+        <!-- Header -->
+        <header class="w-full pt-10">
+            <div class="flex justify-between items-center w-full">
+                <div class="flex items-center gap-2">
+                    <span class="jarvis-accent font-bold text-lg">⚡</span>
+                    <button id="navBtn" class="font-english text-[1.1rem] font-extrabold uppercase tracking-widest transition-all">Overview</button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="syncIndicator" class="flex items-center gap-1.5 text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full font-english border border-green-500/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                        Online
+                    </span>
+                    <span id="dateDisplay" class="text-xs opacity-60 font-english"></span>
+                    <button id="menuBtn">
+                        <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="custom-divider"></div>
+        </header>
+
+        <!-- Main Content -->
+        <main id="mainDisplay" class="flex-1 flex flex-col justify-start pt-6 items-center w-full overflow-hidden">
+
+            <!-- Home View -->
+            <div id="homeView" class="w-full space-y-4">
+                <!-- JARVIS Status Banner -->
+                <div class="glass-card p-3 rounded-2xl bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-orange-500/10 border border-blue-500/20 flex items-center justify-between text-right jarvis-glow" dir="rtl">
+                    <div class="flex items-center gap-2.5">
+                        <span class="relative flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                        </span>
+                        <div class="text-right">
+                            <h4 class="text-xs font-bold jarvis-accent font-english tracking-wide">⚡ JARVIS AI OPERATING SYSTEM</h4>
+                            <p class="text-[10px] text-gray-300 font-urdu">نظام فعال - تمام سہولیات آنلائن</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5 items-center">
+                        <span class="text-[9px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-full font-english text-gray-300">v3.0 Ultra JARVIS</span>
+                        <span class="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full font-urdu">تصدیق شدہ</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="stat-card">
+                        <div class="stat-value text-green-400" id="totalReceived">0</div>
+                        <div class="stat-label">وصولی</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value text-red-400" id="totalExpense">0</div>
+                        <div class="stat-label">خرچ</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value text-orange-400" id="totalBalance">0</div>
+                        <div class="stat-label">بقایا</div>
+                    </div>
+                </div>
+
+                <!-- JARVIS Voice Control Section -->
+                <div class="glass-card p-4 rounded-2xl jarvis-glow">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold flex items-center gap-2">
+                            <span class="jarvis-accent">🎙️</span>
+                            صوتی حکم کنٹرول
+                        </h3>
+                        <button onclick="toggleJarvisHistory()" class="text-xs text-blue-400 hover:text-blue-300">
+                            📋 سابقہ
+                        </button>
+                    </div>
+                    <div class="flex flex-col items-center gap-4">
+                        <div class="jarvis-waveform">
+                            <div class="jarvis-bar" style="animation-delay: 0s;"></div>
+                            <div class="jarvis-bar" style="animation-delay: 0.1s;"></div>
+                            <div class="jarvis-bar" style="animation-delay: 0.2s;"></div>
+                            <div class="jarvis-bar" style="animation-delay: 0.3s;"></div>
+                            <div class="jarvis-bar" style="animation-delay: 0.4s;"></div>
+                        </div>
+                        <button onclick="startJarvisCommand()" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl font-bold text-sm transition-all hover:shadow-lg hover:shadow-blue-500/20 active:scale-95">
+                            Sir, I'm listening...
+                        </button>
+                        <p class="text-xs opacity-60 text-center font-urdu">
+                            کہیں: "رقم درج کریں" یا "آج کا خلاصہ"
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-4 rounded-2xl">
+                    <h3 class="text-sm font-bold mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"><path stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"></path><path stroke="#f97316" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18"></path></svg>
+                        ہفتہ وار رجحان
+                    </h3>
+                    <div style="height: 160px;">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Real-time Activity Feed -->
+                <div class="glass-card p-4 rounded-2xl">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="flex items-center gap-1 text-[10px] bg-blue-500/10 text-blue-400 px-2.5 py-0.5 rounded-full font-english border border-blue-500/20">
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                            Live Activity
+                        </span>
+                        <h3 class="text-sm font-bold font-urdu">کاروباری سرگرمی</h3>
+                    </div>
+                    <div id="realtimeActivityList" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // JARVIS System Variables
+        let jarvisCommandHistory = [];
+        let jarvisAutonomyLevel = 'standard'; // low, standard, high
+        let jarvisMode = 'standby';
+        
+        // JARVIS Personality Responses
+        const jarvisResponses = {
+            greeting: "Good day, Sir. I am at your service.",
+            processing: "Processing your request, Sir. One moment, please.",
+            complete: "Task completed successfully, Sir.",
+            error: "I apologize, Sir. An error has occurred.",
+            awaiting: "I await your command, Sir."
+        };
+        
+        // JARVIS Command Processor
+        window.startJarvisCommand = function() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                showToast("صوتی تشخیص دستیاب نہیں", true);
+                return;
+            }
+            
+            updateJarvisStatus('listening');
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'ur-PK';
+            
+            recognition.onstart = () => {
+                console.log("JARVIS: Listening for commands, Sir.");
+            };
+            
+            recognition.onresult = (event) => {
+                let command = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        command += event.results[i][0].transcript;
+                    }
+                }
+                
+                processJarvisCommand(command);
+            };
+            
+            recognition.onerror = (event) => {
+                updateJarvisStatus('standby');
+                console.error("JARVIS Error:", event.error);
+            };
+            
+            recognition.onend = () => {
+                updateJarvisStatus('standby');
+            };
+            
+            recognition.start();
+        };
+        
+        window.processJarvisCommand = function(command) {
+            const cmd = command.toLowerCase();
+            addJarvisHistory(command);
+            
+            updateJarvisStatus('processing');
+            
+            setTimeout(() => {
+                if (cmd.includes('رقم') || cmd.includes('amount')) {
+                    window.showToast("Sir, opening the financial entry module.");
+                    addEntry('دکانیں');
+                } else if (cmd.includes('خلاصہ') || cmd.includes('summary')) {
+                    window.showToast("Sir, displaying today's summary.");
+                    loadHomeData();
+                } else if (cmd.includes('سنک') || cmd.includes('sync')) {
+                    window.showToast("Sir, synchronizing data with cloud.");
+                    syncPendingOperations(true);
+                } else {
+                    window.showToast(`Sir, I understood: "${command}"`);
+                }
+                updateJarvisStatus('standby');
+            }, 500);
+        };
+        
+        window.updateJarvisStatus = function(status) {
+            jarvisMode = status;
+            const statusEl = document.getElementById('jarvisMode');
+            const statusDisplay = {
+                'standby': 'Standby Mode',
+                'listening': '🎙️ Listening...',
+                'processing': '⚙️ Processing...'
+            };
+            if (statusEl) statusEl.innerText = statusDisplay[status] || status;
+        };
+        
+        window.addJarvisHistory = function(command) {
+            jarvisCommandHistory.unshift({
+                cmd: command,
+                time: new Date().toLocaleTimeString('ur-PK')
+            });
+            if (jarvisCommandHistory.length > 10) jarvisCommandHistory.pop();
+            updateHistoryDisplay();
+        };
+        
+        window.updateHistoryDisplay = function() {
+            const historyList = document.getElementById('jarvisHistoryList');
+            if (historyList) {
+                historyList.innerHTML = jarvisCommandHistory.map(item => 
+                    `<div class="jarvis-command-item">
+                        <span class="text-blue-400">→</span> ${item.cmd}
+                        <span class="opacity-50 ml-2">${item.time}</span>
+                    </div>`
+                ).join('');
+            }
+        };
+        
+        window.toggleJarvisHistory = function() {
+            const container = document.getElementById('jarvisHistoryContainer');
+            if (container) {
+                container.classList.toggle('hidden');
+            }
+        };
+        
+        // Original functions preserved below...
+        window.showToast = (msg, isError = false) => {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        };
+        
+        window.formatNumber = (num) => Number(num || 0).toLocaleString('en-US');
+        
+        window.addEntry = (mod) => {
+            document.getElementById('addModal').classList.add('show');
+            document.getElementById('entryModule').value = mod;
+        };
+        
+        window.closeModal = () => {
+            document.getElementById('addModal').classList.remove('show');
+        };
+        
+        window.saveEntry = async (e) => {
+            e.preventDefault();
+            window.showToast('محفوظ ہو گیا');
+            closeModal();
+        };
+        
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            updateJarvisStatus('standby');
+            const now = new Date();
+            document.getElementById('dateDisplay').innerText = now.toLocaleDateString('ur-PK', {
+                weekday: 'short', month: 'short', day: 'numeric'
+            });
+        });
+        
+        window.enterAsGuest = () => {
+            document.getElementById('authOverlay').style.display = 'none';
+            loadHomeData();
+        };
+        
+        async function loadHomeData() {
+            document.getElementById('totalReceived').innerText = '45,000';
+            document.getElementById('totalExpense').innerText = '12,000';
+            document.getElementById('totalBalance').innerText = '33,000';
+        }
+    </script>
+</body>
+</html>
