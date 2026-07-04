@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PreStore Omega AI OS - Business Management System</title>
+    
+    <script>
+        // Global error interceptor
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.warn('Error caught: ' + message);
+            return true;
+        };
+        window.addEventListener('unhandledrejection', function(event) {
+            console.warn('Unhandled rejection:', event.reason);
+            event.preventDefault();
+        });
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Outfit:wght@300;500;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Noto Nastaliq Urdu', Arial, sans-serif;
+            overflow: hidden;
+            background: #0f172a;
+            -webkit-tap-highlight-color: transparent;
+            color: #e2e8f0;
+        }
+
+        .bg-gradient-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(circle at 20% 30%, #f97316 0%, transparent 50%), 
+                        radial-gradient(circle at 80% 70%, #3b82f6 0%, transparent 50%),
+                        radial-gradient(circle at 50% 50%, #ec4899 0%, transparent 50%);
+            filter: blur(80px);
+            opacity: 0.6;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:active {
+            transform: scale(0.98);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .glass-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            width: 100%;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .glass-input:focus {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .glass-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .font-english {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .custom-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 8px 0;
+            width: 100%;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.error {
+            background: rgba(239, 68, 68, 0.9);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            color: white;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+        }
+
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .slide-in-activity {
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center">
+    <div class="bg-gradient-mesh"></div>
+
+    <!-- Auth Overlay -->
+    <div id="authOverlay" class="fixed inset-0 bg-[#0f172a] z-[9999] flex flex-col items-center justify-center text-white px-4">
+        <h1 class="text-4xl font-bold mb-2 text-center font-english">PreStore Omega AI OS</h1>
+        <p class="opacity-70 mb-8 text-center">آپ کے کاروبار کو منظم کریں</p>
+        
+        <button onclick="enterAsGuest()" class="px-8 py-4 rounded-xl text-lg font-bold bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600 transition active:scale-95 duration-150 flex items-center gap-2 shadow-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            ڈیمو میں لاگ ان کریں
+        </button>
+        
+        <div class="mt-12 text-center text-sm opacity-60">
+            <p>📱 یہ مکمل آف لائن اور لوکل ڈیٹا میں کام کرتا ہے</p>
+            <p>🔒 آپ کا ڈیٹا محفوظ ہے</p>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Add Entry Modal -->
+    <div id="addModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-xl font-bold">نیا اندراج</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="entryForm" onsubmit="saveEntry(event)" class="space-y-4">
+                <input type="hidden" id="entryId">
+                <input type="hidden" id="entryModule">
+                <div id="formFields"></div>
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-xl font-bold hover:from-orange-600 hover:to-pink-600">
+                        محفوظ کریں
+                    </button>
+                    <button type="button" onclick="closeModal()" class="flex-1 glass-card py-3 rounded-xl font-bold">
+                        منسوخ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="appContainer" class="hidden w-full h-full flex flex-col bg-[#0f172a] overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-orange-600 to-pink-600 px-4 py-4 text-white flex justify-between items-center">
+            <button onclick="window.toggleView('home')" class="text-2xl font-bold font-english">Ω</button>
+            <h1 class="text-center flex-1 font-bold" id="pageTitle">صفحہ</h1>
+            <button id="menuBtn" onclick="window.toggleView('menu')" class="text-2xl">☰</button>
+        </div>
+
+        <!-- Home View -->
+        <div id="homeView" class="flex-1 overflow-y-auto pb-safe">
+            <div class="p-4 space-y-4">
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="stat-card">
+                        <div class="stat-value text-green-400" id="totalReceived">0</div>
+                        <div class="stat-label">وصول ہوئی رقم</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value text-red-400" id="totalExpense">0</div>
+                        <div class="stat-label">خرچ کی گئی رقم</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value text-blue-400" id="totalBalance">0</div>
+                        <div class="stat-label">بیلنس</div>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="glass-card p-4 rounded-2xl">
+                    <div class="chart-container">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Modules -->
+                <div class="space-y-2">
+                    <h2 class="text-lg font-bold px-2">ماڈیولز</h2>
+                    <button onclick="window.openModule('دکانیں')" class="w-full glass-card p-4 rounded-xl text-right hover:bg-white/5 transition">
+                        <div class="font-bold">🏪 دکانیں</div>
+                        <div class="text-xs opacity-70">کرایہ اور آمدنی</div>
+                    </button>
+                    <button onclick="window.openModule('اضافی رقم')" class="w-full glass-card p-4 rounded-xl text-right hover:bg-white/5 transition">
+                        <div class="font-bold">💰 اضافی رقم</div>
+                        <div class="text-xs opacity-70">سائیڈ انکم</div>
+                    </button>
+                    <button onclick="window.openModule('ادائیگیاں')" class="w-full glass-card p-4 rounded-xl text-right hover:bg-white/5 transition">
+                        <div class="font-bold">💳 ادائیگیاں</div>
+                        <div class="text-xs opacity-70">بل اور خرچ</div>
+                    </button>
+                    <button onclick="window.openModule('جیب خرچ')" class="w-full glass-card p-4 rounded-xl text-right hover:bg-white/5 transition">
+                        <div class="font-bold">👝 جیب خرچ</div>
+                        <div class="text-xs opacity-70">روزانہ کے اخراجات</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Module Detail View -->
+        <div id="moduleDetail" class="hidden flex-1 flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-white/10">
+                <h2 id="detailTitle" class="text-lg font-bold mb-2">ماڈیول</h2>
+                <div class="flex gap-4 mb-4">
+                    <div class="flex-1 text-center">
+                        <div class="text-xl font-bold text-green-400" id="moduleIn">0</div>
+                        <div class="text-xs opacity-70">آمدنی</div>
+                    </div>
+                    <div class="flex-1 text-center">
+                        <div class="text-xl font-bold text-red-400" id="moduleOut">0</div>
+                        <div class="text-xs opacity-70">خرچ</div>
+                    </div>
+                </div>
+                <button onclick="window.openAddModal(window.currentModule)" class="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-2 rounded-xl font-bold">
+                    + نیا اندراج
+                </button>
+            </div>
+            <div id="moduleEntries" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+        </div>
+
+        <!-- Menu View -->
+        <div id="menuData" class="hidden flex-1 overflow-y-auto pb-safe">
+            <div class="p-4 space-y-4">
+                <div class="glass-card p-4 rounded-xl text-center">
+                    <h2 class="text-lg font-bold mb-4">سیٹنگز</h2>
+                    <div class="space-y-2">
+                        <label class="block text-sm opacity-70 mb-2">صارف کا رول</label>
+                        <select id="roleSelector" onchange="changeUserRole(this.value)" class="glass-input w-full">
+                            <option value="owner">مالک</option>
+                            <option value="partner">بزنس پارٹنر</option>
+                            <option value="worker">ملازم</option>
+                        </select>
+                    </div>
+                    <p id="roleDescription" class="text-xs opacity-60 mt-4"></p>
+                </div>
+
+                <button onclick="clearAllData()" class="w-full glass-card p-4 rounded-xl text-center hover:bg-red-500/10 transition">
+                    🗑️ تمام ڈیٹا صاف کریں
+                </button>
+
+                <button onclick="exportData()" class="w-full glass-card p-4 rounded-xl text-center hover:bg-blue-500/10 transition">
+                    📥 ڈیٹا ڈاؤن لوڈ کریں
+                </button>
+
+                <button onclick="doLogout()" class="w-full glass-card p-4 rounded-xl text-center hover:bg-red-500/10 transition">
+                    🚪 لاگ آؤٹ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize App
+        let currentUser = null;
+        let isGuestMode = false;
+        window.currentModule = '';
+        const formTemplates = {
+            'دکانیں': [
+                { name: 'amount', label: 'رقم', type: 'number' },
+                { name: 'type', label: 'قسم', type: 'select', options: [{value: 'income', label: 'آمدنی'}, {value: 'expense', label: 'خرچ'}] },
+                { name: 'description', label: 'تفصیل', type: 'text' }
+            ],
+            'اضافی رقم': [
+                { name: 'amount', label: 'رقم', type: 'number' },
+                { name: 'type', label: 'قسم', type: 'select', options: [{value: 'income', label: 'آمدنی'}, {value: 'expense', label: 'خرچ'}] },
+                { name: 'description', label: 'تفصیل', type: 'text' }
+            ],
+            'ادائیگیاں': [
+                { name: 'amount', label: 'رقم', type: 'number' },
+                { name: 'type', label: 'قسم', type: 'select', options: [{value: 'expense', label: 'ادائیگی'}, {value: 'income', label: 'وصولی'}] },
+                { name: 'description', label: 'تفصیل', type: 'text' }
+            ],
+            'جیب خرچ': [
+                { name: 'amount', label: 'رقم', type: 'number' },
+                { name: 'type', label: 'قسم', type: 'select', options: [{value: 'expense', label: 'خرچ'}, {value: 'income', label: 'واپسی'}] },
+                { name: 'description', label: 'تفصیل', type: 'text' }
+            ]
+        };
+
+        function enterAsGuest() {
+            isGuestMode = true;
+            currentUser = {
+                uid: 'guest_user',
+                displayName: 'مہمان صارف',
+                email: 'guest@local'
+            };
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('appContainer').classList.remove('hidden');
+            applyRolePermissions();
+            prepopulateDemoData();
+            loadHomeData();
+        }
+
+        function prepopulateDemoData() {
+            const now = new Date();
+            const mockShops = [
+                { id: 'mock_1', amount: 45000, type: 'income', description: 'دکان 1 کا کرایہ', module: 'دکانیں', createdAt: new Date(now - 86400000).toISOString() },
+                { id: 'mock_2', amount: 12000, type: 'income', description: 'دکان 2 کا کرایہ', module: 'دکانیں', createdAt: new Date(now - 172800000).toISOString() },
+            ];
+            const mockPayments = [
+                { id: 'mock_3', amount: 8500, type: 'expense', description: 'بجلی کا بل', module: 'ادائیگیاں', createdAt: new Date(now - 86400000).toISOString() },
+                { id: 'mock_4', amount: 15000, type: 'expense', description: 'پلمبر کی فیس', module: 'ادائیگیاں', createdAt: new Date(now - 259200000).toISOString() },
+            ];
+
+            localStorage.setItem('prestore_cache_guest_user_دکانیں', JSON.stringify(mockShops));
+            localStorage.setItem('prestore_cache_guest_user_ادائیگیاں', JSON.stringify(mockPayments));
+            localStorage.setItem('prestore_cache_guest_user_اضافی رقم', JSON.stringify([]));
+            localStorage.setItem('prestore_cache_guest_user_جیب خرچ', JSON.stringify([]));
+        }
+
+        function applyRolePermissions() {
+            const role = localStorage.getItem('prestore_user_role') || 'owner';
+            document.getElementById('roleSelector').value = role;
+            
+            const descriptions = {
+                'owner': 'مالک کے پاس تمام ماڈیولز اور مکمل رسائی ہے',
+                'partner': 'پارٹنر کے پاس زیادہ تر رسائی ہے',
+                'worker': 'ملازم کے پاس محدود رسائی ہے'
+            };
+            document.getElementById('roleDescription').innerText = descriptions[role] || descriptions['owner'];
+        }
+
+        window.changeUserRole = (role) => {
+            localStorage.setItem('prestore_user_role', role);
+            applyRolePermissions();
+            window.showToast(`رول تبدیل کر دیا گیا: ${role}`);
+            loadHomeData();
+        };
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        window.showToast = showToast;
+
+        function formatNumber(num) {
+            return Number(num || 0).toLocaleString('en-US');
+        }
+        window.formatNumber = formatNumber;
+
+        async function getAllEntries(module) {
+            if (!currentUser) return [];
+            const cacheKey = `prestore_cache_${currentUser.uid}_${module}`;
+            let entries = [];
+            try {
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) entries = JSON.parse(cached);
+            } catch (e) { console.error(e); }
+            return entries;
+        }
+
+        async function getModuleStats(module) {
+            const entries = await getAllEntries(module);
+            let income = 0, expense = 0;
+            entries.forEach(e => {
+                if (e.type === 'income' || e.type === 'received' || e.type === 'given') {
+                    income += Number(e.amount || 0);
+                } else {
+                    expense += Number(e.amount || 0);
+                }
+            });
+            return { count: entries.length, income, expense };
+        }
+
+        async function addEntry(module, data) {
+            if (!currentUser) return;
+            const cacheKey = `prestore_cache_${currentUser.uid}_${module}`;
+            const entry = { 
+                ...data, 
+                id: 'local_' + Date.now(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]');
+            cached.push(entry);
+            localStorage.setItem(cacheKey, JSON.stringify(cached));
+            window.showToast('اندراج محفوظ کر دیا گیا');
+        }
+
+        async function updateEntry(module, id, data) {
+            const cacheKey = `prestore_cache_${currentUser.uid}_${module}`;
+            const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]');
+            const idx = cached.findIndex(x => x.id === id);
+            if (idx !== -1) {
+                cached[idx] = { ...cached[idx], ...data, updatedAt: new Date().toISOString() };
+                localStorage.setItem(cacheKey, JSON.stringify(cached));
+                window.showToast('ترمیم محفوظ کر دی گئی');
+            }
+        }
+
+        async function deleteEntry(module, id) {
+            const cacheKey = `prestore_cache_${currentUser.uid}_${module}`;
+            let cached = JSON.parse(localStorage.getItem(cacheKey) || '[]');
+            cached = cached.filter(x => x.id !== id);
+            localStorage.setItem(cacheKey, JSON.stringify(cached));
+            window.showToast('اندراج حذف کر دیا گیا');
+        }
+
+        window.openModule = (mod) => {
+            window.currentModule = mod;
+            document.getElementById('detailTitle').innerText = mod;
+            window.toggleView('module');
+            loadModuleEntries(mod);
+        };
+
+        window.toggleView = (mode) => {
+            document.getElementById('homeView').classList.add('hidden');
+            document.getElementById('moduleDetail').classList.add('hidden');
+            document.getElementById('menuData').classList.add('hidden');
+            
+            if (mode === 'home') document.getElementById('homeView').classList.remove('hidden');
+            else if (mode === 'module') document.getElementById('moduleDetail').classList.remove('hidden');
+            else if (mode === 'menu') document.getElementById('menuData').classList.remove('hidden');
+        };
+
+        async function loadHomeData() {
+            if (!currentUser) return;
+            const modules = ['دکانیں', 'اضافی رقم', 'ادائیگیاں', 'جیب خرچ'];
+            let tR = 0, tE = 0;
+            for (const mod of modules) {
+                const s = await getModuleStats(mod);
+                tR += s.income;
+                tE += s.expense;
+            }
+            document.getElementById('totalReceived').innerText = formatNumber(tR);
+            document.getElementById('totalExpense').innerText = formatNumber(tE);
+            document.getElementById('totalBalance').innerText = formatNumber(tR - tE);
+
+            // Draw chart
+            const canvas = document.getElementById('weeklyChart');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                if (window.weeklyChart && typeof window.weeklyChart.destroy === 'function') {
+                    window.weeklyChart.destroy();
+                }
+                window.weeklyChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['اتوار', 'سوموار', 'منگل', 'بدھ', 'جمعرات', 'جمعہ', 'ہفتہ'],
+                        datasets: [{
+                            label: 'آمدنی',
+                            data: [12000, 19000, 3000, 5000, 2000, 3000, 9000],
+                            backgroundColor: '#22c55e'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { display: false }, y: { display: false } }
+                    }
+                });
+            }
+        }
+
+        async function loadModuleEntries(mod) {
+            const entries = await getAllEntries(mod);
+            const stats = await getModuleStats(mod);
+            document.getElementById('moduleIn').innerText = formatNumber(stats.income);
+            document.getElementById('moduleOut').innerText = formatNumber(stats.expense);
+            
+            const cont = document.getElementById('moduleEntries');
+            if (entries.length === 0) {
+                cont.innerHTML = '<div class="text-center py-10 opacity-50">کوئی اندراج نہیں</div>';
+                return;
+            }
+            
+            entries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            cont.innerHTML = entries.map(e => {
+                const isInc = e.type === 'income' || e.type === 'received' || e.type === 'given';
+                const d = new Date(e.createdAt).toLocaleDateString('ur-PK');
+                return `
+                    <div class="glass-card p-3 rounded-xl cursor-pointer hover:bg-white/5 transition" onclick="openEditModal('${mod}', '${e.id}')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-bold ${isInc ? 'text-green-400' : 'text-red-400'}">${isInc ? '+' : '-'} Rs. ${formatNumber(e.amount)}</div>
+                                <div class="text-sm opacity-70 text-right">${e.description || 'اندراج'}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs opacity-50">${d}</div>
+                                <button onclick="event.stopPropagation(); confirmDelete('${mod}', '${e.id}')" class="text-red-400 text-xs mt-1">حذف</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.openAddModal = (mod, entry = null) => {
+            document.getElementById('addModal').classList.add('show');
+            document.getElementById('entryModule').value = mod;
+            document.getElementById('modalTitle').innerText = entry ? 'ترمیم' : `نیا ${mod}`;
+            
+            const fields = document.getElementById('formFields');
+            const tmpl = formTemplates[mod] || formTemplates['دکانیں'];
+            let html = '';
+            tmpl.forEach(f => {
+                const val = entry ? entry[f.name] : '';
+                if (f.type === 'select') {
+                    html += `<div><label class="block text-sm opacity-70 mb-1">${f.label}</label>
+                    <select name="${f.name}" class="glass-input" required><option value="">منتخب کریں</option>
+                    ${f.options.map(o => `<option value="${o.value}" ${val === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}</select></div>`;
+                } else {
+                    html += `<div><label class="block text-sm opacity-70 mb-1">${f.label}</label><input type="${f.type}" name="${f.name}" value="${val}" class="glass-input" required></div>`;
+                }
+            });
+            if (entry) html += `<input type="hidden" name="id" value="${entry.id}">`;
+            fields.innerHTML = html;
+        };
+        window.openEditModal = async (mod, id) => {
+            const entries = await getAllEntries(mod);
+            const e = entries.find(x => x.id === id);
+            if (e) window.openAddModal(mod, e);
+        };
+
+        window.closeModal = () => document.getElementById('addModal').classList.remove('show');
+
+        window.saveEntry = async (e) => {
+            e.preventDefault();
+            const form = document.getElementById('entryForm');
+            const fd = new FormData(form);
+            const mod = document.getElementById('entryModule').value;
+            const id = fd.get('id');
+            const data = {};
+            for (let [k, v] of fd.entries()) {
+                if (k !== 'id') data[k] = v;
+            }
+            if (id) await updateEntry(mod, id, data);
+            else await addEntry(mod, data);
+            window.closeModal();
+            loadModuleEntries(mod);
+            loadHomeData();
+        };
+
+        window.confirmDelete = async (mod, id) => {
+            if (confirm('کیا آپ واقعی حذف کرنا چاہتے ہیں؟')) {
+                await deleteEntry(mod, id);
+                loadModuleEntries(mod);
+                loadHomeData();
+            }
+        };
+
+        window.doLogout = () => {
+            isGuestMode = false;
+            currentUser = null;
+            document.getElementById('authOverlay').classList.remove('hidden');
+            document.getElementById('appContainer').classList.add('hidden');
+            localStorage.clear();
+            window.showToast('لاگ آؤٹ کر دیے گئے');
+        };
+
+        window.clearAllData = () => {
+            if (confirm('کیا آپ واقعی تمام ڈیٹا صاف کرنا چاہتے ہیں؟')) {
+                localStorage.clear();
+                window.showToast('تمام ڈیٹا صاف کر دیا گیا');
+                prepopulateDemoData();
+                loadHomeData();
+            }
+        };
+
+        window.exportData = () => {
+            const modules = ['دکانیں', 'اضافی رقم', 'ادائیگیاں', 'جیب خرچ'];
+            let allData = {};
+            modules.forEach(mod => {
+                const key = `prestore_cache_guest_user_${mod}`;
+                allData[mod] = JSON.parse(localStorage.getItem(key) || '[]');
+            });
+            const json = JSON.stringify(allData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `PreStore_Data_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            window.showToast('ڈیٹا ڈاؤن لوڈ ہو گیا');
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('PreStore Omega AI OS loaded successfully');
+        });
+    </script>
+</body>
+</html>
